@@ -1,8 +1,6 @@
 # [RiffGen.com](https://riffgen.com)
 
-A fork of [RestorePhotos.io](https://restorephotos.io/).
-
-This project generates musical riffs using AI.
+This project generates musical riffs using AI. It began as a fork of [RestorePhotos.io](https://restorephotos.io/).
 
 [//]: # ([![Face Photo Restorer]&#40;./public/screenshot.png&#41;]&#40;https://restorephotos.io/&#41;)
 ## How it works
