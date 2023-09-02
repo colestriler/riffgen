@@ -5,7 +5,7 @@ This project generates musical riffs using AI. It began as a fork of [RestorePho
 [//]: # ([![Face Photo Restorer]&#40;./public/screenshot.png&#41;]&#40;https://restorephotos.io/&#41;)
 ## How it works
 
-It uses an ML model from the Facebook called [musicgen](https://replicate.com/facebookresearch/musicgen) on [Replicate](https://replicate.com/) to generate riffs based on some input audio. This application gives you the ability to upload any audio file, which will send it through this ML Model using a Next.js API route, and return your generated riff.
+It uses an ML model from Facebook called [musicgen](https://replicate.com/facebookresearch/musicgen) on [Replicate](https://replicate.com/) to generate riffs based on some input audio. This application gives you the ability to upload any audio file, which will send it through this ML Model using a Next.js API route, and return your generated riff.
 
 ### Cloning the repository the local machine.
 
