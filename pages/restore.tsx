@@ -1,25 +1,39 @@
-import { NextPage } from "next";
+import {NextPage} from "next";
 import Head from "next/head";
 import Image from "next/image";
-import { useState } from "react";
-import { UploadDropzone } from "react-uploader";
+import React, {useCallback, useState} from "react";
+import {UploadDropzone} from "react-uploader";
 import {Uploader, UploadWidgetConfig} from "uploader";
-import { CompareSlider } from "../components/CompareSlider";
+import {CompareSlider} from "../components/CompareSlider";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import LoadingDots from "../components/LoadingDots";
 import Toggle from "../components/Toggle";
 import appendNewToName from "../utils/appendNewToName";
 import downloadPhoto from "../utils/downloadPhoto";
-import NSFWPredictor from "../utils/nsfwCheck";
-import va from "@vercel/analytics";
-import { useSession, signIn } from "next-auth/react";
+import {useSession, signIn} from "next-auth/react";
 import useSWR from "swr";
-import { Rings } from "react-loader-spinner";
-import {FileName} from "@upload-io/upload-api-client-upload-js/dist/models/FileName";
-import {
-  RelativeOrAbsoluteFolderPath
-} from "@upload-io/upload-api-client-upload-js/dist/models/RelativeOrAbsoluteFolderPath";
+import {Rings} from "react-loader-spinner";
+import {useFormik, useFormikContext} from 'formik';
+import * as Yup from 'yup';
+import FormLabel from "../components/Forms/FormLabel";
+import toast from "react-hot-toast";
+import AudioWaveform from "../components/AudioWaveForm";
+
+export type AudioConfigValues = {
+  model_version: 'melody' | 'large' | 'encode-decode';
+  prompt: string;
+  continuation: boolean;
+  continuation_start: number;
+  continuation_end: number;
+  normalization_strategy: 'peak' | 'loudness' | 'clip' | 'rms';
+  duration: number;
+  top_k: number;
+  top_p: number;
+  temperature: number;
+  classifier_free_guidance: number;
+  output_format: 'wav' | 'mp3',
+}
 
 // Configuration for the uploader
 const uploader = Uploader({
@@ -36,30 +50,27 @@ const Home: NextPage = () => {
   const [sideBySide, setSideBySide] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [audioName, setAudioName] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const [endpointUrl, setEndpointUrl] = useState<string | null>(null);
 
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const { data, mutate } = useSWR("/api/remaining", fetcher);
-  const { data: session, status } = useSession();
+  const {data, mutate} = useSWR("/api/remaining", fetcher);
+  const {data: session, status} = useSession();
+
+  const toggleAdvanced = () => {
+    setShowAdvanced(!showAdvanced);
+  };
 
   const options: UploadWidgetConfig = {
     maxFileCount: 1,
-    // mimeTypes: ["audio/mpeg"],
-    // editor: { images: { crop: false }, audio: { trim: false } },
-    styles: { colors: { primary: "#000" } },
+    styles: {colors: {primary: "#000"}},
     onValidate: async (file: File): Promise<undefined | string> => {
       if (data.remainingGenerations === 0) {
         return "No more generations left for the day.";
       }
       return undefined;
     },
-    // path: {
-    //   folderPath: "tmp",
-    //       fileName?: FileName;
-    // fileNameFallback?: FileName;
-    // fileNameVariablesEnabled?: boolean;
-    // folderPath?: RelativeOrAbsoluteFolderPath;
-    // folderPathVariablesEnabled?: boolean;
-    // }
   };
 
   const UploadDropZone = () => (
@@ -70,17 +81,89 @@ const Home: NextPage = () => {
         if (file.length !== 0) {
           console.log(file);
           console.log('FILE URL', file[0].fileUrl);
+          const fileType = file[0].fileUrl.slice(-3);
+          console.log('FILE TYPE', fileType);
           setAudioName(file[0].originalFile.originalFileName);
-          setOriginalAudio(file[0].fileUrl.replace("raw", "audio") + "!f=mp3&a=/audio.mp3");
-          generateAudio(file[0].fileUrl.replace("raw", "audio") + "!f=mp3&a=/audio.mp3");
+          setOriginalAudio(file[0].fileUrl.replace("raw", "audio") + `!f=${fileType}&a=/audio.${fileType}`);
         }
       }}
-      width="670px"
-      height="250px"
+      width="100%"
+      height="225px"
     />
   );
 
-  async function generateAudio(fileUrl: string) {
+  const formik = useFormik({
+    initialValues: {
+      model_version: 'melody',
+      prompt: '',
+      continuation: false,
+      continuation_start: 7,
+      continuation_end: 9,
+      normalization_strategy: 'peak',
+      duration: 28,
+      top_k: 250,
+      top_p: 0,
+      temperature: 1,
+      classifier_free_guidance: 3,
+      output_format: 'wav',
+    } as AudioConfigValues,
+    validationSchema: Yup.object({
+      model_version: Yup.string().required('Required'),
+      prompt: Yup.string().required('Required'),
+      continuation_start: Yup.number().required('Required'),
+      continuation_end: Yup.number().required('Required'),
+      normalization_strategy: Yup.string().required('Required'),
+      duration: Yup.number().min(8).max(30).required('Required'),
+      top_k: Yup.number().required('Required'),
+      top_p: Yup.number().required('Required'),
+      temperature: Yup.number().required('Required'),
+      classifier_free_guidance: Yup.number().required('Required'),
+      output_format: Yup.string().required('Required'),
+    }),
+    onSubmit: async (values) => {
+      const endpointUrl = await generateAudio({values, ...{duration: values.duration * 1000}});
+
+
+      if (originalAudio) {
+        values.model_version = "melody";
+      }
+
+      // GET request to get the status of the image restoration process & return the result when it's ready
+      let generatedAudio: string | null = null;
+      while (!generatedAudio && endpointUrl) {
+        // Loop in 1s intervals until the alt text is ready
+        console.log("polling for result...");
+        const res = await fetch("/api/check", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({endpointUrl}),
+        });
+
+        let jsonFinalResponse = await res.json();
+        console.log('FINAL JSON RESPONSE', jsonFinalResponse);
+
+        if (jsonFinalResponse.status === "succeeded") {
+          generatedAudio = jsonFinalResponse.generatedAudio;
+        } else if (jsonFinalResponse.status === "failed") {
+          setError(jsonFinalResponse.generatedAudio);
+          toast.error(jsonFinalResponse.generatedAudio);
+          break;
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+
+      mutate();
+      setNewAudio(generatedAudio);
+      setLoading(false);
+
+    }
+  })
+
+
+  async function generateAudio(values: any) {
     await new Promise((resolve) => setTimeout(resolve, 500));
     setLoading(true);
 
@@ -89,39 +172,55 @@ const Home: NextPage = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ imageUrl: fileUrl }),
+      body: JSON.stringify({audioUrl: originalAudio, ...values}),
     });
 
-    let newPhoto = await res.json();
+    const _endpointUrl = await res.json();
+
     if (res.status !== 200) {
-      setError(newPhoto);
+      setError(_endpointUrl);
+      setLoading(false)
     } else {
       mutate();
-      setNewAudio(newPhoto);
+      return _endpointUrl;  // Return the endpointUrl
     }
-    setLoading(false);
   }
+
 
   return (
     <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>Restore Photos</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>Generate Riffs</title>
+        <link rel="icon" href="/favicon.ico"/>
       </Head>
 
-      <Header photo={session?.user?.image || undefined} />
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-4 sm:mb-0 mb-8">
+      <Header photo={session?.user?.image || undefined}/>
+      <main className="flex flex-1 w-full flex-col items-center justify-start text-center px-4 mt-4 sm:mb-0 mb-8">
+        {/* DEBUG */}
+        {/*<pre className="text-left">{JSON.stringify(formik.values)}</pre>*/}
+        {/*<pre className="text-left">{JSON.stringify({*/}
+        {/*  originalAudio,*/}
+        {/*  newAudio,*/}
+        {/*  loading,*/}
+        {/*  restoredLoaded,*/}
+        {/*  sideBySide,*/}
+        {/*  error,*/}
+        {/*  audioName,*/}
+        {/*  endpointUrl*/}
+        {/*}, null, 2)}</pre>*/}
         <a
           href="https://twitter.com/nutlope/status/1626074563481051136"
           target="_blank"
           rel="noreferrer"
           className="border rounded-2xl py-1 px-4 text-slate-500 text-sm mb-5 hover:text-slate-600 transition duration-300 ease-in-out"
         >
-          <span className="font-semibold">647,143 images</span> restored and
+          <span className="font-semibold">2,457 riffs</span> generated and
           counting
         </a>
-        <h1 className="mx-auto max-w-4xl font-display text-4xl font-bold tracking-normal text-slate-900 sm:text-6xl mb-5">
-          Restore any face photo
+        <h1
+          className="mx-auto max-w-4xl font-display text-4xl font-bold tracking-normal text-slate-900 sm:text-6xl mb-5">
+          {loading ? <span className="pt-4">
+            <>Generating riff</><LoadingDots color="black" style="large"/></span> : "Generate your riff."}
         </h1>
         {status === "authenticated" && data && (
           <p className="text-slate-500">
@@ -137,17 +236,17 @@ const Home: NextPage = () => {
           </p>
         )}
         <div className="flex justify-between items-center w-full flex-col mt-4">
-          <Toggle
-            className={`${restoredLoaded ? "visible mb-6" : "invisible"}`}
-            sideBySide={sideBySide}
-            setSideBySide={(newVal) => setSideBySide(newVal)}
-          />
-          {restoredLoaded && sideBySide && (
-            <CompareSlider
-              original={originalAudio!}
-              restored={newAudio!}
-            />
-          )}
+          {/*<Toggle*/}
+          {/*  className={`${restoredLoaded ? "visible mb-6" : "invisible"}`}*/}
+          {/*  sideBySide={sideBySide}*/}
+          {/*  setSideBySide={(newVal) => setSideBySide(newVal)}*/}
+          {/*/>*/}
+          {/*{restoredLoaded && sideBySide && (*/}
+          {/*  <CompareSlider*/}
+          {/*    original={originalAudio!}*/}
+          {/*    restored={newAudio!}*/}
+          {/*  />*/}
+          {/*)}*/}
           {status === "loading" ? (
             <div className="max-w-[670px] h-[250px] flex justify-center items-center">
               <Rings
@@ -161,10 +260,185 @@ const Home: NextPage = () => {
                 ariaLabel="rings-loading"
               />
             </div>
-          ) : status === "authenticated" && !originalAudio ? (
-            <UploadDropZone />
+          ) : status === "authenticated" && !newAudio ? (
+            <>
+              <form onSubmit={formik.handleSubmit} onChange={formik.handleChange} className="w-full space-y-4">
+                {/* Prompt */}
+                <div>
+                  <FormLabel title="Prompt" subtitle="A description of the music you want to generate."/>
+                  <textarea id="prompt" name="prompt" rows={4} className="mt-1 p-2 w-full rounded-md border"
+                            placeholder="Edo25 major g melodies that sound triumphant and cinematic. Leading up to a crescendo that resolves in a 9th harmonic"
+                            value={formik.values.prompt} onChange={formik.handleChange} disabled={loading}></textarea>
+                </div>
+                {/* Input Audio */}
+                <div>
+                  <FormLabel title="Input Audio"
+                             subtitle="An audio file that will influence the generated music. If `continuation` is `True`, the generated music will be a continuation of the audio file. Otherwise, the generated music will mimic the audio file's melody."/>
+
+                  {!originalAudio && (
+                    <UploadDropZone/>
+                  )}
+                  {originalAudio && !newAudio && (
+                    <div className="mt-5">
+                      <h2 className="mb-1 font-medium text-lg">Uploaded Audio</h2>
+                      <div className="flex justify-center">
+                        <AudioWaveform audioUrl={originalAudio} />
+
+                        {/*<audio*/}
+                        {/*  controls*/}
+                        {/*  src={originalAudio}*/}
+                        {/*>*/}
+                        {/*  Your browser does not support the*/}
+                        {/*  <code>audio</code> element.*/}
+                        {/*</audio>*/}
+                      </div>
+                      <button disabled={loading} type="button"
+                              className="text-blue-500 hover:text-blue-400 mt-2 text-sm"
+                              onClick={() => setOriginalAudio(null)}>Reset upload
+                      </button>
+                    </div>
+                  )}
+                  {/*<input type="file" id="input_audio" name="input_audio" className="mt-1 p-2 w-full rounded-md border"/>*/}
+                </div>
+
+
+                <div className="w-full text-left">
+                  <button type="button" onClick={toggleAdvanced} className="text-blue-500 flex items-center">
+        <span className="ml-2">
+          {!showAdvanced ? `Show advanced options` : "Hide advanced options"}
+        </span>
+                    <svg
+                      className={`transition-transform duration-300 ease-in-out transform ${showAdvanced ? 'rotate-180' : ''}`}
+                      width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8.293 9.293L12 13L15.7071 9.293L16.4142 10L12 14.4142L7.58579 10L8.293 9.293Z"
+                            fill="#1E40AF"/>
+                    </svg>
+
+                  </button>
+                </div>
+                {showAdvanced && (
+                  <div
+                    className="space-y-4 p-8 md:p-10 md:pl-12 bg-gradient-to-r from-indigo-300/10 from-10% via-purple-200/10 via-30% to-indigo-400/10 to-90% rounded-lg border-[0.75px] border-slate-200">
+                    <p className="text-center text-lg font-bold">Advanced Configuration</p>
+                    {/* Model Version */}
+                    <div>
+                      <FormLabel title="Model Version"
+                                 subtitle="Model to use for generation. If set to 'encode-decode', the audio specified via 'input_audio' will simply be encoded and then decoded."/>
+                      <select id="model_version" name="model_version" className="mt-1 p-2 w-full rounded-md border"
+                              value={formik.values.model_version} disabled={loading}>
+                        <option value="melody">Melody</option>
+                        <option value="large">Large</option>
+                        <option value="encode-decode">Encode-Decode</option>
+                      </select>
+                    </div>
+                    {/* Duration */}
+                    <div>
+                      <FormLabel title="Duration" subtitle="Duration of the generated audio in seconds. (maximum: 30)"/>
+                      <input type="number" min="1" max="30" id="duration" name="duration"
+                             className="mt-1 p-2 w-full rounded-md border" value={formik.values.duration}
+                             onChange={formik.handleChange} disabled={loading}/>
+                    </div>
+                    {/*{formik.errors.duration && formik.touched.duration ? (<p className="text-red">Duration must be between 1 and 30 seconds</p>) : (null)}*/}
+
+                    {/* Continuation */}
+                    <div className="flex items-start gap-3">
+                      <input type="checkbox" id="continuation" name="continuation" className="mt-1"/>
+                      <FormLabel title="Continuation"
+                                 subtitle="If `True`, generated music will continue `melody`. Otherwise, generated music will mimic `audio_input`'s melody."/>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row mx-auto gap-5">
+                      {/* Continuation Start */}
+                      <div className="w-full">
+                        <FormLabel title="Continuation Start"
+                                   subtitle="Start time of the audio file to use for continuation."/>
+                        <input type="number" id="continuation_start" name="continuation_start"
+                               className="mt-1 p-2 w-full rounded-md border" value={formik.values.continuation_start}
+                               onChange={formik.handleChange} disabled={loading}/>
+                      </div>
+                      {/* Continuation End */}
+                      <div className="w-full">
+                        <FormLabel title="Continuation End"
+                                   subtitle="End time of the audio file to use for continuation."/>
+                        <input type="number" id="continuation_end" name="continuation_end"
+                               className="mt-1 p-2 w-full rounded-md border" value={formik.values.continuation_end}
+                               onChange={formik.handleChange} disabled={loading}/>
+                      </div>
+                    </div>
+
+                    {/* Normalization Strategy */}
+                    <div>
+                      <FormLabel title="Normalization Strategy" subtitle="Strategy for normalizing audio."/>
+                      <select id="normalization_strategy" name="normalization_strategy"
+                              className="mt-1 p-2 w-full rounded-md border"
+                              value={formik.values.normalization_strategy} onChange={formik.handleChange}
+                              disabled={loading}>
+                        <option value="loudness">Loudness</option>
+                        <option value="clip">Clip</option>
+                        <option value="peak">Peak</option>
+                        <option value="rms">RMS</option>
+                      </select>
+                    </div>
+                    {/* Top K */}
+                    <div>
+                      <FormLabel title="Top K"
+                                 subtitle="Reduces sampling to tokens with cumulative probability of p. When set to `0` (default), top_k sampling is used."/>
+                      <input type="number" id="top_k" name="top_k" className="mt-1 p-2 w-full rounded-md border"
+                             value={formik.values.top_k} onChange={formik.handleChange} disabled={loading}/>
+                    </div>
+                    {/* Top P */}
+                    <div>
+                      <FormLabel title="Top P" subtitle="Reduces sampling to the k most likely tokens."/>
+                      <input type="number" id="top_p" name="top_p" className="mt-1 p-2 w-full rounded-md border"
+                             value={formik.values.top_p} onChange={formik.handleChange} disabled={loading}/>
+                    </div>
+                    {/* Temperature */}
+                    <div>
+                      <FormLabel title="Temperature"
+                                 subtitle="Controls the 'conservativeness' of the sampling process. Higher temperature means more diversity."/>
+                      <input type="number" id="temperature" name="temperature"
+                             className="mt-1 p-2 w-full rounded-md border" value={formik.values.temperature}
+                             onChange={formik.handleChange} disabled={loading}/>
+                    </div>
+                    {/* Classifier Free Guidance */}
+                    <div>
+                      <FormLabel title="Classifier Free Guidance"
+                                 subtitle="Increases the influence of inputs on the output. Higher values produce lower-varience outputs that adhere more closely to inputs."/>
+                      <input type="number" id="classifier_free_guidance" name="classifier_free_guidance"
+                             className="mt-1 p-2 w-full rounded-md border"
+                             value={formik.values.classifier_free_guidance} onChange={formik.handleChange}
+                             disabled={loading}/>
+                    </div>
+                    {/* Output Format */}
+                    <div>
+                      <FormLabel title="Output Format" subtitle="Output format for generated audio."/>
+                      <select id="output_format" name="output_format" className="mt-1 p-2 w-full rounded-md border"
+                              value={formik.values.output_format} onChange={formik.handleChange} disabled={loading}>
+                        <option value="mp3">MP3</option>
+                        <option value="wav">WAV</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <button disabled={loading} type="submit"
+                        className="button-style text-lg w-full bg-black rounded-lg py-5 px-5 text-white">
+                  {loading ? <span className="pt-4">
+                <LoadingDots color="white" style="large"/>
+              </span> : "Generate riff"}
+                </button>
+              </form>
+              {/*<AudioConfigForm*/}
+              {/*  loading={loading}*/}
+              {/*  newAudio={newAudio}*/}
+              {/*  setAudioName={setAudioName}*/}
+              {/*  setError{...setError}*/}
+              {/*  setNewAudio={setNewAudio}*/}
+              {/*  setLoading={setLoading}*/}
+              {/*/>*/}
+            </>
           ) : (
-            !originalAudio && (
+            !session && (
               <div className="h-[250px] flex flex-col items-center space-y-6 max-w-[670px] -mt-8">
                 <div className="max-w-xl text-gray-600">
                   Sign in below with Google to create a free account and restore
@@ -186,51 +460,29 @@ const Home: NextPage = () => {
               </div>
             )
           )}
-          {originalAudio && !newAudio && (
-            <Image
-              alt="original photo"
-              src={originalAudio}
-              className="rounded-2xl"
-              width={475}
-              height={475}
-            />
-          )}
-          {newAudio && originalAudio && !sideBySide && (
-            <div className="flex sm:space-x-4 sm:flex-row flex-col">
-              <div>
-                <h2 className="mb-1 font-medium text-lg">Original Photo</h2>
-                <audio
-                  controls
-                  src={originalAudio}
-                >
-                  Your browser does not support the
-                  <code>audio</code> element.
-                </audio>
-              </div>
-              <div className="sm:mt-0 mt-8">
-                <h2 className="mb-1 font-medium text-lg">Restored Audio</h2>
+          {newAudio && !sideBySide && (
+            <div className="flex sm:space-x-4 sm:flex-row flex-col w-full md:gap-10">
+              {originalAudio && (
+                <div className="w-full">
+                  <h2 className="mb-1 font-medium text-lg">Original Audio</h2>
+                  <AudioWaveform audioUrl={originalAudio} />
+                </div>
+              )}
+              <div className="sm:mt-0 mt-8 w-full">
+                <h2 className="mb-1 font-medium text-lg">Generated Audio</h2>
                 <a href={newAudio} target="_blank" rel="noreferrer">
-                  <audio
-                    controls
-                    src={newAudio}
-                    onLoadedData={() => setRestoredLoaded(true)}
-                  >
-                    Your browser does not support the
-                    <code>audio</code> element.
-                  </audio>
+                  <AudioWaveform audioUrl={newAudio} onLoadedData={() => setRestoredLoaded(true)} />
+                  {/*<audio*/}
+                  {/*  controls*/}
+                  {/*  src={newAudio}*/}
+                  {/*  onLoadedData={() => setRestoredLoaded(true)}*/}
+                  {/*>*/}
+                  {/*  Your browser does not support the*/}
+                  {/*  <code>audio</code> element.*/}
+                  {/*</audio>*/}
                 </a>
               </div>
             </div>
-          )}
-          {loading && (
-            <button
-              disabled
-              className="bg-black rounded-full text-white font-medium px-4 pt-2 pb-3 mt-8 hover:bg-black/80 w-40"
-            >
-              <span className="pt-4">
-                <LoadingDots color="white" style="large" />
-              </span>
-            </button>
           )}
           {error && (
             <div
@@ -246,36 +498,56 @@ const Home: NextPage = () => {
             </div>
           )}
           <div className="flex space-x-2 justify-center">
-            {originalAudio && !loading && (
-              <button
-                onClick={() => {
-                  setOriginalAudio(null);
-                  setNewAudio(null);
-                  setRestoredLoaded(false);
-                  setError(null);
-                }}
-                className="bg-black rounded-full text-white font-medium px-4 py-2 mt-8 hover:bg-black/80 transition"
-              >
-                Upload New Photo
-              </button>
-            )}
+            {/*{originalAudio && !loading && (*/}
+            {/*  <button*/}
+            {/*    onClick={() => {*/}
+            {/*      setOriginalAudio(null);*/}
+            {/*      setNewAudio(null);*/}
+            {/*      setRestoredLoaded(false);*/}
+            {/*      setError(null);*/}
+            {/*      setEndpointUrl(null);*/}
+            {/*      setAudioName(null);*/}
+            {/*      formik.resetForm();*/}
+            {/*    }}*/}
+            {/*    className="bg-black rounded-full text-white font-medium px-4 py-2 mt-8 hover:bg-black/80 transition"*/}
+            {/*  >*/}
+            {/*    Upload New Audio File*/}
+            {/*  </button>*/}
+            {/*)}*/}
             {restoredLoaded && (
-              <button
-                onClick={() => {
-                  downloadPhoto(newAudio!, appendNewToName(audioName!));
-                }}
-                className="bg-white rounded-full text-black border font-medium px-4 py-2 mt-8 hover:bg-gray-100 transition"
-              >
-                Download Restored Photo
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setOriginalAudio(null);
+                    setNewAudio(null);
+                    setRestoredLoaded(false);
+                    setError(null);
+                    setEndpointUrl(null);
+                    setAudioName(null);
+                    formik.resetForm();
+                  }}
+                  className="bg-black rounded-full text-white font-medium px-4 py-2 mt-8 hover:bg-black/80 transition"
+                >
+                  Generate a New Riff
+                </button>
+                <button
+                  onClick={() => {
+                    downloadPhoto(newAudio!, appendNewToName(audioName!, formik.values.output_format));
+                  }}
+                  className="bg-white rounded-full text-black border font-medium px-4 py-2 mt-8 hover:bg-gray-100 transition"
+                >
+                  Download Generated Riff
+                </button>
+              </>
             )}
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer/>
     </div>
   );
 };
 
 export default Home;
+
 
