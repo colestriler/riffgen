@@ -15,7 +15,7 @@ const Home: NextPage = () => {
   return (
     <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>Face Photo Restorer</title>
+        <title>Generate Custom Riffs using AI</title>
       </Head>
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 sm:mt-28 mt-20">
