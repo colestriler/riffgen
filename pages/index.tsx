@@ -38,7 +38,7 @@ const Home: NextPage = () => {
           in seconds.
         </h1>
         <p className="mx-auto mt-12 max-w-xl text-lg text-slate-700 leading-7">
-          The world of 'AI for music' has arrived. Generate custom riffs in seconds, powered by the latest AI models and 100% free.
+          The world of AI has arrived for music. Generate custom riffs in seconds, powered by the latest AI models and 100% free.
         </p>
         <div className="flex justify-center space-x-4">
           <a
