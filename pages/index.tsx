@@ -7,6 +7,7 @@ import Header from "../components/Header";
 import SquigglyLines from "../components/SquigglyLines";
 import {Testimonials} from "../components/Testimonials";
 import AudioWaveform from "../components/AudioWaveForm";
+import {USER_COUNT, USER_COUNT_STR} from "../lib/config";
 
 
 
@@ -25,20 +26,19 @@ const Home: NextPage = () => {
           rel="noreferrer"
           className="border rounded-2xl py-1 px-4 text-slate-500 text-sm mb-5 hover:scale-105 transition duration-300 ease-in-out"
         >
-          Used by over <span className="font-semibold">300,000</span> happy
+          Used by over <span className="font-semibold">{USER_COUNT_STR}</span> happy
           users
         </a>
         <h1 className="mx-auto max-w-4xl font-display text-5xl font-bold tracking-normal text-slate-900 sm:text-7xl">
           Generate custom riffs{" "}
-          <span className="relative whitespace-nowrap text-[#3290EE]">
+          <span className="relative whitespace-nowrap text-green-600">
             <SquigglyLines/>
             <span className="relative">using AI</span>
           </span>{" "}
           in seconds.
         </h1>
         <p className="mx-auto mt-12 max-w-xl text-lg text-slate-700 leading-7">
-          Have old and blurry face photos? Let our AI restore them so those
-          memories can live on. 100% free – restore your photos today.
+          The world of 'AI for music' has arrived. Generate custom riffs in seconds, powered by the latest AI models and 100% free.
         </p>
         <div className="flex justify-center space-x-4">
           <a

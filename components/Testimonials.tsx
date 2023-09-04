@@ -1,4 +1,5 @@
 import Image from "next/image";
+import {USER_COUNT, USER_COUNT_STR} from "../lib/config";
 
 const testimonials = [
   [
@@ -82,7 +83,7 @@ export function Testimonials() {
             Loved by many worldwide.
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-slate-700 leading-7">
-            See what our 300,000+ users are saying about the product.
+            See what our {USER_COUNT_STR}+ users are saying about the product.
           </p>
         </div>
         <ul
@@ -104,7 +105,8 @@ export function Testimonials() {
                             "{testimonial.content}"
                           </p>
                         </blockquote>
-                        <figcaption className="relative mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
+                        <figcaption
+                          className="relative mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
                           <div>
                             <div className="font-display text-base text-slate-900">
                               {testimonial.author.name}

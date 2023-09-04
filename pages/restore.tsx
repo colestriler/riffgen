@@ -19,6 +19,7 @@ import * as Yup from 'yup';
 import FormLabel from "../components/Forms/FormLabel";
 import toast from "react-hot-toast";
 import AudioWaveform from "../components/AudioWaveForm";
+import {USER_COUNT_STR} from "../lib/config";
 
 export type AudioConfigValues = {
   model_version: 'melody' | 'large' | 'encode-decode';
@@ -214,7 +215,7 @@ const Home: NextPage = () => {
           rel="noreferrer"
           className="border rounded-2xl py-1 px-4 text-slate-500 text-sm mb-5 hover:text-slate-600 transition duration-300 ease-in-out"
         >
-          <span className="font-semibold">2,457 riffs</span> generated and
+          <span className="font-semibold">{USER_COUNT_STR} riffs</span> generated and
           counting
         </a>
         <h1
@@ -266,40 +267,11 @@ const Home: NextPage = () => {
                 {/* Prompt */}
                 <div>
                   <FormLabel title="Prompt" subtitle="A description of the music you want to generate."/>
-                  <textarea id="prompt" name="prompt" rows={4} className="mt-1 p-2 w-full rounded-md border"
+                  <textarea id="prompt" name="prompt" rows={4} className="mt-1 p-2 w-full rounded-md border-2 focus:border-purple-200"
                             placeholder="Edo25 major g melodies that sound triumphant and cinematic. Leading up to a crescendo that resolves in a 9th harmonic"
                             value={formik.values.prompt} onChange={formik.handleChange} disabled={loading}></textarea>
                 </div>
                 {/* Input Audio */}
-                <div>
-                  <FormLabel title="Input Audio"
-                             subtitle="An audio file that will influence the generated music. If `continuation` is `True`, the generated music will be a continuation of the audio file. Otherwise, the generated music will mimic the audio file's melody."/>
-
-                  {!originalAudio && (
-                    <UploadDropZone/>
-                  )}
-                  {originalAudio && !newAudio && (
-                    <div className="mt-5">
-                      <h2 className="mb-1 font-medium text-lg">Uploaded Audio</h2>
-                      <div className="flex justify-center">
-                        <AudioWaveform audioUrl={originalAudio} />
-
-                        {/*<audio*/}
-                        {/*  controls*/}
-                        {/*  src={originalAudio}*/}
-                        {/*>*/}
-                        {/*  Your browser does not support the*/}
-                        {/*  <code>audio</code> element.*/}
-                        {/*</audio>*/}
-                      </div>
-                      <button disabled={loading} type="button"
-                              className="text-blue-500 hover:text-blue-400 mt-2 text-sm"
-                              onClick={() => setOriginalAudio(null)}>Reset upload
-                      </button>
-                    </div>
-                  )}
-                  {/*<input type="file" id="input_audio" name="input_audio" className="mt-1 p-2 w-full rounded-md border"/>*/}
-                </div>
 
 
                 <div className="w-full text-left">
@@ -320,6 +292,35 @@ const Home: NextPage = () => {
                   <div
                     className="space-y-4 p-8 md:p-10 md:pl-12 bg-gradient-to-r from-indigo-300/10 from-10% via-purple-200/10 via-30% to-indigo-400/10 to-90% rounded-lg border-[0.75px] border-slate-200">
                     <p className="text-center text-lg font-bold">Advanced Configuration</p>
+                    <div>
+                      <FormLabel title="Input Audio"
+                                 subtitle="An audio file that will influence the generated music. If `continuation` is `True`, the generated music will be a continuation of the audio file. Otherwise, the generated music will mimic the audio file's melody."/>
+
+                      {!originalAudio && (
+                        <UploadDropZone/>
+                      )}
+                      {originalAudio && !newAudio && (
+                        <div className="mt-5">
+                          <h2 className="mb-1 font-medium text-lg">Uploaded Audio</h2>
+                          <div className="flex justify-center">
+                            <AudioWaveform audioUrl={originalAudio}/>
+
+                            {/*<audio*/}
+                            {/*  controls*/}
+                            {/*  src={originalAudio}*/}
+                            {/*>*/}
+                            {/*  Your browser does not support the*/}
+                            {/*  <code>audio</code> element.*/}
+                            {/*</audio>*/}
+                          </div>
+                          <button disabled={loading} type="button"
+                                  className="text-blue-500 hover:text-blue-400 mt-2 text-sm"
+                                  onClick={() => setOriginalAudio(null)}>Reset upload
+                          </button>
+                        </div>
+                      )}
+                      {/*<input type="file" id="input_audio" name="input_audio" className="mt-1 p-2 w-full rounded-md border"/>*/}
+                    </div>
                     {/* Model Version */}
                     <div>
                       <FormLabel title="Model Version"
@@ -465,13 +466,13 @@ const Home: NextPage = () => {
               {originalAudio && (
                 <div className="w-full">
                   <h2 className="mb-1 font-medium text-lg">Original Audio</h2>
-                  <AudioWaveform audioUrl={originalAudio} />
+                  <AudioWaveform audioUrl={originalAudio}/>
                 </div>
               )}
               <div className="sm:mt-0 mt-8 w-full">
                 <h2 className="mb-1 font-medium text-lg">Generated Audio</h2>
                 <a href={newAudio} target="_blank" rel="noreferrer">
-                  <AudioWaveform audioUrl={newAudio} onLoadedData={() => setRestoredLoaded(true)} />
+                  <AudioWaveform audioUrl={newAudio} onLoadedData={() => setRestoredLoaded(true)}/>
                   {/*<audio*/}
                   {/*  controls*/}
                   {/*  src={newAudio}*/}
