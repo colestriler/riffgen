@@ -10,7 +10,7 @@ export async function GET(
   const provider = params.slug as Provider;
 
   let options: { redirectTo: string; scopes?: string } = {
-    redirectTo: `${new URL(req.url).origin}/auth/callback`,
+    redirectTo: `${process.env.NEXT_PUBLIC_ORIGIN}/auth/callback`,
   };
 
   if (provider == "azure") {
