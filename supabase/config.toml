@@ -75,9 +75,7 @@ url = ""
 # support authentication with google
 [auth.external.google]
 enabled = true
-client_id = "142924714371-851du3paj1c2ggivbifv13tqq2bf5jsf.apps.googleusercontent.com"
-secret = "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"
-##client_id = "env(GOOGLE_CLIENT_ID)"
-##secret = "env(GOOGLE_CLIENT_SECRET)"
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
 #redirect_uri = "http://localhost:54321/auth/v1/callback"
 url = ""
