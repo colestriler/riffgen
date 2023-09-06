@@ -8,7 +8,7 @@ Under the hood, we use Facebook Research's [musicgen](https://replicate.com/face
 This repo was initially a clone of the [Supabase Starter](https://vercel.com/templates/next.js/supabase) template from Vercel.
 
 ## Setup
-To run the app, run `yarn install` and create a `.env.local` file with the necessary variables defined in the example environment file.
+Run `yarn install` to install the dependencies and create a `.env.local` file with the necessary variables defined in the example environment file.
 
 You'll also need to:
 - Setup a Google Auth client
