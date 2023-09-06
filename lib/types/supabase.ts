@@ -40,40 +40,43 @@ export interface Database {
           id: number
           model_config: Json | null
           model_name: string | null
-          user_id: number | null
+          output_url: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: number
           model_config?: Json | null
           model_name?: string | null
-          user_id?: number | null
+          output_url?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: number
           model_config?: Json | null
           model_name?: string | null
-          user_id?: number | null
+          output_url?: string | null
+          user_id?: string | null
         }
       }
       user: {
         Row: {
           created_at: string | null
-          email: string | null
-          id: number
+          email: string
+          id: string
           image: string | null
         }
         Insert: {
           created_at?: string | null
-          email?: string | null
-          id?: number
+          email: string
+          id?: string
           image?: string | null
         }
         Update: {
           created_at?: string | null
-          email?: string | null
-          id?: number
+          email?: string
+          id?: string
           image?: string | null
         }
       }

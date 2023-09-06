@@ -2,11 +2,12 @@ import {NextRequest, NextResponse} from "next/server";
 import {NextApiResponse} from "next";
 import {createRouteHandlerClient} from "@supabase/auth-helpers-nextjs";
 import {cookies} from "next/headers";
+import {Database} from "@/lib/types/supabase";
 
 export async function POST(request: NextRequest, response: NextApiResponse) {
 
   // Check if user is logged in
-  const supabase = await createRouteHandlerClient({cookies});
+  const supabase = await createRouteHandlerClient<Database>({cookies});
   const session = await supabase.auth.getSession();
   const {data: {user}} = await supabase.auth.getUser()
 
@@ -54,14 +55,19 @@ export async function POST(request: NextRequest, response: NextApiResponse) {
   // create a new query row in the database
   const {data: query, error} = await supabase
     .from('query')
-    .insert([
+    .insert(
       {
         user_id: user.id,
         model_name: 'fb_musicgen',
         model_config: modelInput,
       },
-    ])
+    )
     .select();
+
+  if (!query || error) {
+    console.log(error)
+    return NextResponse.json("Error creating query", {status: 500});
+  }
 
   // if (error) throw new Error(error.message);
 
@@ -86,6 +92,12 @@ export async function POST(request: NextRequest, response: NextApiResponse) {
   if (jsonStartResponse.urls.get) {
     endpointUrl = jsonStartResponse.urls.get;
   }
+
+  const {data: queryUpdate, error: queryUpdateError} = await supabase
+    .from('query')
+    .update({output_url: endpointUrl})
+    .eq("id", query[0].id)
+    .select();
 
 
   console.log('JSON RESPONSE', jsonStartResponse);
