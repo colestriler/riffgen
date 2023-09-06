@@ -98,7 +98,7 @@ export default function FacebookMusicGen({session, user}: { session: any, user: 
       continuation_start: 7,
       continuation_end: 9,
       normalization_strategy: 'peak',
-      duration: 28,
+      duration: 15,
       top_k: 250,
       top_p: 0,
       temperature: 1,
