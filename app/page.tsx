@@ -4,6 +4,9 @@ import Link from 'next/link'
 import LogoutButton from "@/app/(components)/LogoutButton";
 import NextJsLogo from "@/app/(components)/NextJsLogo";
 import SupabaseLogo from "@/app/(components)/SupabaseLogo";
+import Header from "@/app/(components)/Header";
+import AudioWaveform from "@/app/(components)/AudioWaveForm";
+import Footer from "@/app/(components)/Footer";
 
 export const dynamic = 'force-dynamic'
 
@@ -41,39 +44,15 @@ const examples = [
 export default async function Index() {
   const supabase = createServerComponentClient({ cookies })
   // const supabase = createServerComponentSupabaseClient({ headers, cookies})
-
   const session = await supabase.auth.getSession()
-  console.log("SESSION", session);
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  console.log('USER', user);
-
   return (
     <div className="w-full flex flex-col items-center">
-      <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-        <div className="w-full max-w-4xl flex justify-between items-center p-3 text-sm text-foreground">
-          <div />
-          <div>
-            {user ? (
-              <div className="flex items-center gap-4">
-                Hey, {user.email}!
-                <LogoutButton />
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="py-2 px-4 rounded-md no-underline bg-btn-background hover:bg-btn-background-hover"
-              >
-                Login
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
-
+      <Header />
       <div className="animate-in flex flex-col gap-14 opacity-0 max-w-4xl px-3 py-16 lg:py-24 text-foreground">
         <div className="flex flex-col items-center mb-4 lg:mb-12">
           <div className="flex gap-8 justify-center items-center">
@@ -84,111 +63,129 @@ export default async function Index() {
             <NextJsLogo />
           </div>
           <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
-          <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center my-12">
-            The fastest way to start building apps with{' '}
-            <strong>Supabase</strong> and <strong>Next.js</strong>
+          <p className="text-3xl font-bold lg:text-6xl !leading-tight mx-auto max-w-2xl text-center my-12">
+            Generate custom riffs{' '}
+            <strong className="text-pink-500">using AI</strong> in seconds
           </p>
-          <div className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background">
-            Get started by editing <strong>app/page.tsx</strong>
+          <Link href="/generate">
+            <div className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background cursor-pointer hover:opacity-90">
+              Generate a riff
+            </div>
+
+          </Link>
+          {/*<div className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background">*/}
+          {/*  Get started by editing <strong>app/page.tsx</strong>*/}
+          {/*</div>*/}
+        </div>
+        <div className="flex justify-between items-center w-full flex-col sm:mt-10 mt-6">
+          <div className="flex flex-col space-y-10 mt-4 mb-16">
+            <div className="flex sm:space-x-2 sm:flex-row flex-col">
+              <div className="flex flex-col items-center justify-center">
+                <AudioWaveform audioUrl="https://replicate.delivery/pbxt/ujBiqf0LDwWmBiIcz51X1CgbyX5RGR0B6ZbGJenTXcUrezAjA/out.wav" />
+                <p className="text-center leading-7 mx-auto mt-1 max-w-xl p-5 rounded-lg text-xl text-slate-400 font-thin"><span className="font-bold mr-2">Prompt:</span>Edo25 major g melodies that sound triumphant and cinematic. Leading up to a crescendo that resolves
+                    in a 9th harmonic.</p>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
 
-        <div className="flex flex-col gap-8 text-foreground">
-          <h2 className="text-lg font-bold text-center">
-            Everything you need to get started
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {resources.map(({ title, subtitle, url, icon }) => (
-              <a
-                key={title}
-                className="relative flex flex-col group rounded-lg border p-6 hover:border-foreground"
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <h3 className="font-bold mb-2  min-h-[40px] lg:min-h-[60px]">
-                  {title}
-                </h3>
-                <div className="flex flex-col grow gap-4 justify-between">
-                  <p className="text-sm opacity-70">{subtitle}</p>
-                  <div className="flex justify-between items-center">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="opacity-80 group-hover:opacity-100"
-                    >
-                      <path
-                        d={icon}
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+        {/*<div className="flex flex-col gap-8 text-foreground">*/}
+        {/*  <h2 className="text-lg font-bold text-center">*/}
+        {/*    Everything you need to get started*/}
+        {/*  </h2>*/}
+        {/*  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">*/}
+        {/*    {resources.map(({ title, subtitle, url, icon }) => (*/}
+        {/*      <a*/}
+        {/*        key={title}*/}
+        {/*        className="relative flex flex-col group rounded-lg border p-6 hover:border-foreground"*/}
+        {/*        href={url}*/}
+        {/*        target="_blank"*/}
+        {/*        rel="noreferrer"*/}
+        {/*      >*/}
+        {/*        <h3 className="font-bold mb-2  min-h-[40px] lg:min-h-[60px]">*/}
+        {/*          {title}*/}
+        {/*        </h3>*/}
+        {/*        <div className="flex flex-col grow gap-4 justify-between">*/}
+        {/*          <p className="text-sm opacity-70">{subtitle}</p>*/}
+        {/*          <div className="flex justify-between items-center">*/}
+        {/*            <svg*/}
+        {/*              width="24"*/}
+        {/*              height="24"*/}
+        {/*              viewBox="0 0 24 24"*/}
+        {/*              fill="none"*/}
+        {/*              xmlns="http://www.w3.org/2000/svg"*/}
+        {/*              className="opacity-80 group-hover:opacity-100"*/}
+        {/*            >*/}
+        {/*              <path*/}
+        {/*                d={icon}*/}
+        {/*                stroke="currentColor"*/}
+        {/*                strokeWidth="2"*/}
+        {/*                strokeLinecap="round"*/}
+        {/*                strokeLinejoin="round"*/}
+        {/*              />*/}
+        {/*            </svg>*/}
 
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all"
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
+        {/*            <svg*/}
+        {/*              xmlns="http://www.w3.org/2000/svg"*/}
+        {/*              width="24"*/}
+        {/*              height="24"*/}
+        {/*              viewBox="0 0 24 24"*/}
+        {/*              fill="none"*/}
+        {/*              stroke="currentColor"*/}
+        {/*              strokeWidth="2"*/}
+        {/*              strokeLinecap="round"*/}
+        {/*              strokeLinejoin="round"*/}
+        {/*              className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all"*/}
+        {/*            >*/}
+        {/*              <polyline points="9 18 15 12 9 6" />*/}
+        {/*            </svg>*/}
+        {/*          </div>*/}
+        {/*        </div>*/}
+        {/*      </a>*/}
+        {/*    ))}*/}
+        {/*  </div>*/}
+        {/*</div>*/}
 
-        <div className="flex flex-col gap-8 text-foreground">
-          <div className="grid gap-2 justify-center mx-auto text-center">
-            <h2 className="text-lg font-bold text-center">Examples</h2>
-            <p className="text-sm">
-              Look in the <code>_examples</code> folder to see how to create a
-              Supabase client in all the different contexts.
-            </p>
-          </div>
-          <div className="w-full justify-center border rounded-lg overflow-hidden">
-            {examples.map(({ type, src }) => (
-              <div
-                key={type}
-                className="w-full grid grid-cols-3 border-b last:border-b-0 text-sm"
-              >
-                <div className="flex items-center font-bold p-4 min-h-12 w-full">
-                  {type}
-                </div>
-                <div className="col-span-2 border-l p-4 flex items-center">
-                  <code className="text-sm whitespace-pre-wrap">{src}</code>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/*<div className="flex flex-col gap-8 text-foreground">*/}
+        {/*  <div className="grid gap-2 justify-center mx-auto text-center">*/}
+        {/*    <h2 className="text-lg font-bold text-center">Examples</h2>*/}
+        {/*    <p className="text-sm">*/}
+        {/*      Look in the <code>_examples</code> folder to see how to create a*/}
+        {/*      Supabase client in all the different contexts.*/}
+        {/*    </p>*/}
+        {/*  </div>*/}
+        {/*  <div className="w-full justify-center border rounded-lg overflow-hidden">*/}
+        {/*    {examples.map(({ type, src }) => (*/}
+        {/*      <div*/}
+        {/*        key={type}*/}
+        {/*        className="w-full grid grid-cols-3 border-b last:border-b-0 text-sm"*/}
+        {/*      >*/}
+        {/*        <div className="flex items-center font-bold p-4 min-h-12 w-full">*/}
+        {/*          {type}*/}
+        {/*        </div>*/}
+        {/*        <div className="col-span-2 border-l p-4 flex items-center">*/}
+        {/*          <code className="text-sm whitespace-pre-wrap">{src}</code>*/}
+        {/*        </div>*/}
+        {/*      </div>*/}
+        {/*    ))}*/}
+        {/*  </div>*/}
+        {/*</div>*/}
 
-        <div className="flex justify-center text-center text-xs">
-          <p>
-            Powered by{' '}
-            <Link
-              href="https://supabase.com/"
-              target="_blank"
-              className="font-bold"
-            >
-              Supabase
-            </Link>
-          </p>
-        </div>
+        {/*<div className="flex justify-center text-center text-xs">*/}
+        {/*  <p>*/}
+        {/*    Powered by{' '}*/}
+        {/*    <Link*/}
+        {/*      href="https://supabase.com/"*/}
+        {/*      target="_blank"*/}
+        {/*      className="font-bold"*/}
+        {/*    >*/}
+        {/*      Supabase*/}
+        {/*    </Link>*/}
+        {/*  </p>*/}
+        {/*</div>*/}
+        <Footer />
       </div>
     </div>
   )

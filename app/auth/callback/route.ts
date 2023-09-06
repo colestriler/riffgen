@@ -9,14 +9,7 @@ export async function GET(request: Request) {
   // by the Auth Helpers package. It exchanges an auth code for the user's session.
   // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-sign-in-with-code-exchange
   const requestUrl = new URL(request.url)
-  // const code = requestUrl.searchParams.get('code')
   const code = requestUrl.searchParams.get('code')
-
-  console.log('HITTING CALLBACK');
-  console.log('CODE: ', code);
-  console.log('HEADERS: ', headers);
-  console.log('COOKIES: ', cookies);
-  console.log('REQUEST URL: ', requestUrl);
 
   if (code) {
     const supabase = createRouteHandlerClient({ cookies })
@@ -24,5 +17,5 @@ export async function GET(request: Request) {
   }
 
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(requestUrl.origin)
+  return NextResponse.redirect(requestUrl.origin + '/generate')
 }

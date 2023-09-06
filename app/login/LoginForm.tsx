@@ -5,10 +5,6 @@
  * https://supabase.com/docs/guides/auth/auth-helpers/nextjs-server-components
  */
 import {FC} from "react";
-import clsx from "clsx";
-import Link from "next/link";
-import {createBrowserClient} from "@/lib/clients/supabase-browser";
-import Messages from "@/app/login/messages";
 import {useRouter} from "next/navigation";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 // import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
