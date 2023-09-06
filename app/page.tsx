@@ -1,5 +1,5 @@
 import {createServerComponentClient} from '@supabase/auth-helpers-nextjs'
-import { headers, cookies } from 'next/headers'
+import {headers, cookies} from 'next/headers'
 import Link from 'next/link'
 import LogoutButton from "@/app/(components)/LogoutButton";
 import NextJsLogo from "@/app/(components)/NextJsLogo";
@@ -7,6 +7,8 @@ import SupabaseLogo from "@/app/(components)/SupabaseLogo";
 import Header from "@/app/(components)/Header";
 import AudioWaveform from "@/app/(components)/AudioWaveForm";
 import Footer from "@/app/(components)/Footer";
+import Head from "next/head";
+import {PAGE_DESCRIPTION, PAGE_TITLE} from "@/utils/constants";
 
 export const dynamic = 'force-dynamic'
 
@@ -35,40 +37,48 @@ const resources = [
 ]
 
 const examples = [
-  { type: 'Client Components', src: 'app/_examples/client-component/page.tsx' },
-  { type: 'Server Components', src: 'app/_examples/server-component/page.tsx' },
-  { type: 'Server Actions', src: 'app/_examples/server-action/page.tsx' },
-  { type: 'Route Handlers', src: 'app/_examples/route-handler.ts' },
+  {type: 'Client Components', src: 'app/_examples/client-component/page.tsx'},
+  {type: 'Server Components', src: 'app/_examples/server-component/page.tsx'},
+  {type: 'Server Actions', src: 'app/_examples/server-action/page.tsx'},
+  {type: 'Route Handlers', src: 'app/_examples/route-handler.ts'},
 ]
 
+export const metadata = {
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION
+}
+
 export default async function Index() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = createServerComponentClient({cookies})
   // const supabase = createServerComponentSupabaseClient({ headers, cookies})
   const session = await supabase.auth.getSession()
 
   const {
-    data: { user },
+    data: {user},
   } = await supabase.auth.getUser()
 
   return (
+
     <div className="w-full flex flex-col items-center">
-      <Header />
+      <Header/>
       <div className="animate-in flex flex-col gap-14 opacity-0 max-w-4xl px-3 py-16 lg:py-24 text-foreground">
         <div className="flex flex-col items-center mb-4 lg:mb-12">
           <div className="flex gap-8 justify-center items-center">
             <Link href="https://supabase.com/" target="_blank">
-              <SupabaseLogo />
+              <SupabaseLogo/>
             </Link>
-            <span className="border-l rotate-45 h-6" />
-            <NextJsLogo />
+            <span className="border-l rotate-45 h-6"/>
+            <NextJsLogo/>
           </div>
           <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
-          <p className="text-3xl font-bold lg:text-6xl !leading-tight mx-auto max-w-2xl text-center my-12">
+          <p className="text-3xl font-bold lg:text-6xl !leading-tight mx-auto max-w-2xl text-center mt-12 mb-1">
             Generate custom riffs{' '}
             <strong className="text-pink-500">using AI</strong> in seconds
           </p>
+          <p className="text-mono text-slate-400 max-w-xl text-center my-6">{PAGE_DESCRIPTION}</p>
           <Link href="/generate">
-            <div className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background cursor-pointer hover:opacity-90">
+            <div
+              className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background cursor-pointer hover:opacity-90">
               Generate a riff
             </div>
 
@@ -81,15 +91,19 @@ export default async function Index() {
           <div className="flex flex-col space-y-10 mt-4 mb-16">
             <div className="flex sm:space-x-2 sm:flex-row flex-col">
               <div className="flex flex-col items-center justify-center">
-                <AudioWaveform audioUrl="https://replicate.delivery/pbxt/ujBiqf0LDwWmBiIcz51X1CgbyX5RGR0B6ZbGJenTXcUrezAjA/out.wav" />
-                <p className="text-center leading-7 mx-auto mt-1 max-w-xl p-5 rounded-lg text-xl text-slate-400 font-thin"><span className="font-bold mr-2">Prompt:</span>Edo25 major g melodies that sound triumphant and cinematic. Leading up to a crescendo that resolves
-                    in a 9th harmonic.</p>
+                <AudioWaveform
+                  audioUrl="https://replicate.delivery/pbxt/ujBiqf0LDwWmBiIcz51X1CgbyX5RGR0B6ZbGJenTXcUrezAjA/out.wav"/>
+                <p
+                  className="text-center leading-7 mx-auto mt-1 max-w-xl p-5 rounded-lg text-xl text-slate-400 font-thin">
+                  <span className="font-bold mr-2">Prompt:</span>Edo25 major g melodies that sound triumphant and
+                  cinematic. Leading up to a crescendo that resolves
+                  in a 9th harmonic.</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
+        <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent"/>
 
         {/*<div className="flex flex-col gap-8 text-foreground">*/}
         {/*  <h2 className="text-lg font-bold text-center">*/}
@@ -185,8 +199,9 @@ export default async function Index() {
         {/*    </Link>*/}
         {/*  </p>*/}
         {/*</div>*/}
-        <Footer />
+        <Footer/>
       </div>
     </div>
+
   )
 }
