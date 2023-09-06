@@ -48,25 +48,8 @@ export async function POST(request: NextRequest, response: NextApiResponse) {
   const modelInput = audioUrl !== null ? {
     input_audio: audioUrl,
     ...audioConfig
-    } : {
+  } : {
     ...audioConfig
-  }
-
-  // create a new query row in the database
-  const {data: query, error} = await supabase
-    .from('query')
-    .insert(
-      {
-        user_id: user.id,
-        model_name: 'fb_musicgen',
-        model_config: modelInput,
-      },
-    )
-    .select();
-
-  if (!query || error) {
-    console.log(error)
-    return NextResponse.json("Error creating query", {status: 500});
   }
 
   // if (error) throw new Error(error.message);
@@ -93,12 +76,23 @@ export async function POST(request: NextRequest, response: NextApiResponse) {
     endpointUrl = jsonStartResponse.urls.get;
   }
 
-  const {data: queryUpdate, error: queryUpdateError} = await supabase
+  // create a new query row in the database
+  const {data: query, error} = await supabase
     .from('query')
-    .update({output_url: endpointUrl})
-    .eq("id", query[0].id)
+    .insert(
+      {
+        user_id: user.id,
+        model_name: 'fb_musicgen',
+        model_config: modelInput,
+        output_url: endpointUrl
+      },
+    )
     .select();
 
+  if (!query || error) {
+    console.log(error)
+    return NextResponse.json("Error creating query", {status: 500});
+  }
 
   console.log('JSON RESPONSE', jsonStartResponse);
   console.log('ENDPOINT URL', endpointUrl);
