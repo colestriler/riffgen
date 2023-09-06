@@ -4,7 +4,7 @@ The world of AI has arrived for music. Generate custom riffs in seconds, powered
 
 Under the hood, we use Facebook Research's [musicgen](https://replicate.com/facebookresearch/musicgen) model hosted on Replicate and plan on adding support for additional models in the near future.
 
-![img_1.png](img_1.png)
+![img_1.png](./public/img_1.png)
 # Running Locally
 This repo was initially a clone of the [Supabase Starter](https://vercel.com/templates/next.js/supabase) template from Vercel.
 
