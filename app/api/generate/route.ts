@@ -122,5 +122,4 @@ export async function POST(request: NextRequest, response: NextApiResponse) {
   // }
 
   return NextResponse.json(endpointUrl ? endpointUrl : "Failed to start generation.", {status: 200});
-
 }
